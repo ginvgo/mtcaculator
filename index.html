@@ -368,13 +368,7 @@
                 </div>
                 <div class="result-value" id="resultMerchantDiscount">¥0.00 <span class="percentage">0%</span></div>
             </div>
-            <div class="result-row" id="merchantDeliveryDiscountRow">
-                <div class="result-label">
-                    商家承担的配送费减免
-                    <div class="formula">在指定距离内减免的配送费金额</div>
-                </div>
-                <div class="result-value" id="resultMerchantDeliveryDiscount">¥0.00 <span class="percentage">0%</span></div>
-            </div>
+            
             <div class="result-row" id="productCostRow">
                 <div class="result-label">
                     商品成本
@@ -384,7 +378,7 @@
             <div class="result-total result-row">
                 <div class="result-label">
                     商家最终收益
-                    <div class="formula">用户支付金额 - 平台佣金 - 美团配送费 - 商家承担的优惠 - 商家承担的配送费减免</div>
+                    <div class="formula">用户支付金额 - 平台佣金 - 美团配送费 - 商家承担的优惠</div>
                 </div>
                 <div class="result-value" id="resultFinalEarnings">¥0.00 <span class="percentage">0%</span></div>
             </div>
@@ -527,7 +521,7 @@
             );
             
             // 计算最终收益
-            const finalEarnings = orderAmount - commission - meituanDeliveryFee - merchantDiscountShare - merchantDeliveryDiscountShare;
+            const finalEarnings = orderAmount - commission - meituanDeliveryFee - merchantDiscountShare;
             
             // 计算净利润 (如果提供了成本)
             const netProfit = finalEarnings - productCost;
@@ -542,7 +536,7 @@
             document.getElementById('resultCommission').innerHTML = formatCurrency(commission) + formatPercentage(commission, orderAmount);
             document.getElementById('resultMeituanDeliveryFee').innerHTML = formatCurrency(meituanDeliveryFee) + formatPercentage(meituanDeliveryFee, orderAmount);
             document.getElementById('resultMerchantDiscount').innerHTML = formatCurrency(merchantDiscountShare) + formatPercentage(merchantDiscountShare, orderAmount);
-            document.getElementById('resultMerchantDeliveryDiscount').innerHTML = formatCurrency(merchantDeliveryDiscountShare) + formatPercentage(merchantDeliveryDiscountShare, orderAmount);
+            
             document.getElementById('resultProductCost').innerHTML = formatCurrency(productCost) + formatPercentage(productCost, orderAmount);
             document.getElementById('resultFinalEarnings').innerHTML = formatCurrency(finalEarnings) + formatPercentage(finalEarnings, orderAmount);
             document.getElementById('resultNetProfit').innerHTML = formatCurrency(netProfit) + formatPercentage(netProfit, orderAmount);
