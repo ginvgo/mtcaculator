@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美团商家收益计算器</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #FF9E19;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .checkbox-group label {
+            margin-bottom: 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .result {
+            background-color: #FFF9E6;
+            border-left: 4px solid #FF9E19;
+            padding: 16px;
+            margin-top: 20px;
+            border-radius: 6px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .result-label {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .formula {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .percentage {
+            display: inline-block;
+            font-size: 12px;
+            color: #0066cc;
+            background-color: #e6f7ff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+        
+        .result-value {
+            font-weight: 500;
+        }
+        
+        .result-total {
+            font-weight: bold;
+            color: #FF6600;
+            font-size: 20px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #ddd;
+        }
+        
+        .calculate-btn {
+            background-color: #FFD700;
+            color: #333;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+            transition: background-color 0.2s;
+        }
+        
+        .calculate-btn:hover {
+            background-color: #FFC107;
+        }
+        
+        .info-badge {
+            display: inline-block;
+            background-color: #e6f7ff;
+            color: #1890ff;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+        .fee-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .profit-positive {
+            color: #52c41a;
+        }
+        
+        .profit-negative {
+            color: #f5222d;
+        }
+        
+        .highlight {
+            background-color: #fff7e6;
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #ffc53d;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            
+            .card {
+                padding: 16px;
+            }
+            
+            .result-row {
+                flex-direction: column;
+            }
+            
+            .result-value {
+                margin-top: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>美团商家收益计算器</h1>
+    
+    <div class="card">
+        <div class="section-title">商品信息</div>
+        
+        <div class="form-group">
+            <label for="productPrice">商品金额 (元)</label>
+            <input type="number" id="productPrice" min="0" step="0.01" placeholder="输入商品定价金额" value="0">
+        </div>
+        
+        <div class="form-group">
+            <label for="productCost">商品成本 (元) <span class="info-badge">可选</span></label>
+            <input type="number" id="productCost" min="0" step="0.01" placeholder="输入商品成本" value="0">
+        </div>
+        
+        <div class="form-group">
+            <label for="packagingFee">包装费 (元)</label>
+            <input type="number" id="packagingFee" min="0" step="0.01" placeholder="输入包装费" value="0">
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="section-title">配送信息</div>
+        
+        <div class="form-group">
+            <label for="customerDeliveryFee">顾客支付的配送费 (元)</label>
+            <input type="number" id="customerDeliveryFee" min="0" step="0.01" placeholder="输入顾客支付的配送费" value="0">
+        </div>
+        
+        <div class="form-group">
+            <label for="deliveryDistance">配送距离 (公里)</label>
+            <input type="number" id="deliveryDistance" min="0" step="0.1" placeholder="输入配送距离">
+        </div>
+        
+        <div class="form-group">
+            <label for="deliveryTime">配送时间段</label>
+            <select id="deliveryTime">
+                <option value="normal">06:00-22:00 (普通时段)</option>
+                <option value="late">22:00-24:00 (晚间)</option>
+                <option value="early_morning">00:00-02:00 (凌晨)</option>
+                <option value="dawn">02:00-06:00 (深夜)</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="section-title">优惠设置</div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="hasDiscount" onchange="toggleDiscountSection()">
+            <label for="hasDiscount">用户使用优惠</label>
+        </div>
+        
+        <div id="discountSection" class="hidden">
+            <div class="form-group">
+                <label for="discountType">优惠类型</label>
+                <select id="discountType" onchange="toggleCouponSection()">
+                    <option value="none">无优惠</option>
+                    <option value="regularCoupon">普通红包</option>
+                    <option value="expandCoupon">膨胀红包</option>
+                    <option value="discount">折扣</option>
+                </select>
+            </div>
+            
+            <div id="couponSection" class="hidden">
+                <div class="form-group">
+                    <label for="couponAmount">红包金额 (元)</label>
+                    <input type="number" id="couponAmount" min="0" step="0.01" placeholder="输入红包金额">
+                    <div class="fee-info" id="couponInfo"></div>
+                </div>
+            </div>
+            
+            <div id="discountPercentSection" class="hidden">
+                <div class="form-group">
+                    <label for="discountPercent">折扣比例 (%)</label>
+                    <input type="number" id="discountPercent" min="0" max="100" step="1" placeholder="输入折扣比例，如90表示9折">
+                </div>
+            </div>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="hasDeliveryDiscount" onchange="toggleDeliveryDiscountSection()">
+            <label for="hasDeliveryDiscount">用户使用配送费减免</label>
+        </div>
+        
+        <div id="deliveryDiscountSection" class="hidden">
+            <div class="form-group">
+                <label for="freeDeliveryDistance">多少公里内免配送费</label>
+                <input type="number" id="freeDeliveryDistance" min="0" step="0.1" placeholder="输入免费配送距离范围">
+            </div>
+            
+            <div class="form-group">
+                <label for="deliveryDiscountAmount">配送费减免金额 (元)</label>
+                <input type="number" id="deliveryDiscountAmount" min="0" step="0.01" placeholder="输入配送费减免金额">
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="section-title">平台服务费设置</div>
+        
+        <div class="form-group">
+            <label for="commissionRate">佣金比例 (%)</label>
+            <input type="number" id="commissionRate" min="0" max="100" step="0.1" value="6.0">
+            <div class="fee-info">目前平台佣金比例为6.0%，保底1.34元</div>
+        </div>
+    </div>
+    
+    <button class="calculate-btn" onclick="calculateEarnings()">计算收益</button>
+    
+    <div id="resultCard" class="card hidden">
+        <div class="section-title">计算结果</div>
+        <div class="result">
+            <div class="result-row">
+                <div class="result-label">
+                    商品金额 (原价)
+                </div>
+                <div class="result-value" id="resultProductPrice">¥0.00</div>
+            </div>
+            <div class="result-row">
+                <div class="result-label">
+                    包装费
+                </div>
+                <div class="result-value" id="resultPackagingFee">¥0.00</div>
+            </div>
+            <div class="result-row">
+                <div class="result-label">
+                    配送费
+                    <div class="formula" id="customerDeliveryFormula">顾客支付的配送费</div>
+                </div>
+                <div class="result-value" id="resultDeliveryFee">¥0.00</div>
+            </div>
+            <div class="result-row" id="resultDiscountRow">
+                <div class="result-label">
+                    用户优惠金额
+                    <div class="formula" id="discountFormula">优惠类型和金额</div>
+                </div>
+                <div class="result-value" id="resultDiscountTotal">¥0.00</div>
+            </div>
+            <div class="result-row" id="resultDeliveryDiscountRow">
+                <div class="result-label">
+                    配送费减免
+                    <div class="formula">指定距离内减免的配送费</div>
+                </div>
+                <div class="result-value" id="resultDeliveryDiscountAmount">¥0.00</div>
+            </div>
+            <div class="result-row highlight">
+                <div class="result-label">
+                    用户实际支付金额
+                    <div class="formula">商品金额 + 包装费 + 配送费 - 优惠金额 - 配送费减免</div>
+                </div>
+                <div class="result-value" id="resultOrderAmount">¥0.00</div>
+            </div>
+            <div class="result-row">
+                <div class="result-label">
+                    美团平台佣金
+                    <div class="formula" id="commissionFormula">用户实际支付金额 × 6.0% (最低1.34元)</div>
+                </div>
+                <div class="result-value" id="resultCommission">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+            <div class="result-row">
+                <div class="result-label">
+                    美团配送费用
+                    <div class="formula" id="deliveryFeeFormula">距离费 + 价格费 + 时段费</div>
+                </div>
+                <div class="result-value" id="resultMeituanDeliveryFee">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+            <div class="result-row" id="merchantDiscountRow">
+                <div class="result-label">
+                    商家承担的优惠金额
+                    <div class="formula" id="merchantDiscountFormula">普通红包最多承担3元，膨胀红包最多承担5元</div>
+                </div>
+                <div class="result-value" id="resultMerchantDiscount">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+            <div class="result-row" id="merchantDeliveryDiscountRow">
+                <div class="result-label">
+                    商家承担的配送费减免
+                    <div class="formula">在指定距离内减免的配送费金额</div>
+                </div>
+                <div class="result-value" id="resultMerchantDeliveryDiscount">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+            <div class="result-row" id="productCostRow">
+                <div class="result-label">
+                    商品成本
+                </div>
+                <div class="result-value" id="resultProductCost">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+            <div class="result-total result-row">
+                <div class="result-label">
+                    商家最终收益
+                    <div class="formula">用户支付金额 - 平台佣金 - 美团配送费 - 商家承担的优惠 - 商家承担的配送费减免</div>
+                </div>
+                <div class="result-value" id="resultFinalEarnings">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+            <div class="result-total result-row" id="netProfitRow">
+                <div class="result-label">
+                    净利润 (考虑成本)
+                    <div class="formula">商家最终收益 - 商品成本</div>
+                </div>
+                <div class="result-value" id="resultNetProfit">¥0.00 <span class="percentage">0%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleDiscountSection() {
+            const discountSection = document.getElementById('discountSection');
+            const hasDiscount = document.getElementById('hasDiscount').checked;
+            
+            discountSection.classList.toggle('hidden', !hasDiscount);
+            
+            if (hasDiscount) {
+                toggleCouponSection();
+            }
+        }
+        
+        function toggleCouponSection() {
+            const discountType = document.getElementById('discountType').value;
+            const couponSection = document.getElementById('couponSection');
+            const discountPercentSection = document.getElementById('discountPercentSection');
+            const couponInfo = document.getElementById('couponInfo');
+            
+            couponSection.classList.toggle('hidden', discountType !== 'regularCoupon' && discountType !== 'expandCoupon');
+            discountPercentSection.classList.toggle('hidden', discountType !== 'discount');
+            
+            if (discountType === 'regularCoupon') {
+                couponInfo.textContent = '普通红包商家最多承担3元';
+            } else if (discountType === 'expandCoupon') {
+                couponInfo.textContent = '膨胀红包商家最多承担5元';
+            } else {
+                couponInfo.textContent = '';
+            }
+        }
+        
+        function toggleDeliveryDiscountSection() {
+            const deliveryDiscountSection = document.getElementById('deliveryDiscountSection');
+            const hasDeliveryDiscount = document.getElementById('hasDeliveryDiscount').checked;
+            
+            deliveryDiscountSection.classList.toggle('hidden', !hasDeliveryDiscount);
+        }
+        
+        function formatCurrency(value) {
+            return '¥' + parseFloat(value).toFixed(2);
+        }
+        
+        function formatPercentage(value, total) {
+            if (total === 0) return '<span class="percentage">0%</span>';
+            const percentage = (value / total * 100).toFixed(1);
+            return `<span class="percentage">${percentage}%</span>`;
+        }
+        
+        function calculateEarnings() {
+            // 获取基本输入值
+            const productPrice = parseFloat(document.getElementById('productPrice').value) || 0;
+            const productCost = parseFloat(document.getElementById('productCost').value) || 0;
+            const packagingFee = parseFloat(document.getElementById('packagingFee').value) || 0;
+            const customerDeliveryFee = parseFloat(document.getElementById('customerDeliveryFee').value) || 0;
+            const deliveryDistance = parseFloat(document.getElementById('deliveryDistance').value) || 0;
+            const commissionRate = parseFloat(document.getElementById('commissionRate').value) || 6.0;
+            
+            // 计算优惠金额
+            let discountTotal = 0;
+            let discountFormula = "";
+            let merchantDiscountShare = 0;
+            let merchantDiscountFormula = "";
+            
+            if (document.getElementById('hasDiscount').checked) {
+                const discountType = document.getElementById('discountType').value;
+                
+                if (discountType === 'regularCoupon' || discountType === 'expandCoupon') {
+                    const couponAmount = parseFloat(document.getElementById('couponAmount').value) || 0;
+                    const maxMerchantShare = discountType === 'regularCoupon' ? 3 : 5;
+                    
+                    discountTotal = couponAmount;
+                    discountFormula = `${discountType === 'regularCoupon' ? '普通' : '膨胀'}红包: ${couponAmount}元`;
+                    
+                    if (couponAmount <= maxMerchantShare) {
+                        merchantDiscountShare = couponAmount;
+                        merchantDiscountFormula = `红包金额 ${couponAmount}元 ≤ 最大承担额 ${maxMerchantShare}元，商家承担全部`;
+                    } else {
+                        merchantDiscountShare = maxMerchantShare;
+                        merchantDiscountFormula = `红包金额 ${couponAmount}元 > 最大承担额 ${maxMerchantShare}元，商家最多承担 ${maxMerchantShare}元`;
+                    }
+                    
+                } else if (discountType === 'discount') {
+                    const discountPercent = parseFloat(document.getElementById('discountPercent').value) || 100;
+                    discountTotal = productPrice * (1 - discountPercent / 100);
+                    merchantDiscountShare = discountTotal; // 折扣全部由商家承担
+                    discountFormula = `折扣: ${discountPercent}% = 商品金额 ${productPrice}元 × (1 - ${discountPercent}%) = ${discountTotal.toFixed(2)}元`;
+                    merchantDiscountFormula = `折扣由商家全部承担: ${discountTotal.toFixed(2)}元`;
+                }
+            }
+            
+            // 计算配送费减免
+            let deliveryDiscountAmount = 0;
+            let merchantDeliveryDiscountShare = 0;
+            
+            if (document.getElementById('hasDeliveryDiscount').checked) {
+                const freeDeliveryDistance = parseFloat(document.getElementById('freeDeliveryDistance').value) || 0;
+                const deliveryDiscountAmountInput = parseFloat(document.getElementById('deliveryDiscountAmount').value) || 0;
+                
+                if (deliveryDistance <= freeDeliveryDistance) {
+                    deliveryDiscountAmount = Math.min(deliveryDiscountAmountInput, customerDeliveryFee);
+                    merchantDeliveryDiscountShare = deliveryDiscountAmount;
+                }
+            }
+            
+            // 计算用户实际支付金额
+            const orderAmount = productPrice + packagingFee + customerDeliveryFee - discountTotal - deliveryDiscountAmount;
+            
+            // 计算平台佣金
+            let commission = (orderAmount * commissionRate / 100);
+            const minCommission = 1.34;
+            
+            // 佣金计算公式显示
+            let commissionFormula = `用户实际支付金额 ${orderAmount}元 × ${commissionRate}%`;
+            
+            // 应用佣金保底规则
+            if (commission < minCommission) {
+                commission = minCommission;
+                commissionFormula += ` = ${commission.toFixed(2)}元 (低于最低1.34元，按1.34元计算)`;
+            } else {
+                commissionFormula += ` = ${commission.toFixed(2)}元`;
+            }
+            
+            // 计算美团配送费及说明
+            const {meituanDeliveryFee, deliveryFeeFormula} = calculateMeituanDeliveryFee(
+                deliveryDistance, 
+                productPrice, 
+                document.getElementById('deliveryTime').value
+            );
+            
+            // 计算最终收益
+            const finalEarnings = orderAmount - commission - meituanDeliveryFee - merchantDiscountShare - merchantDeliveryDiscountShare;
+            
+            // 计算净利润 (如果提供了成本)
+            const netProfit = finalEarnings - productCost;
+            
+            // 显示结果
+            document.getElementById('resultProductPrice').textContent = formatCurrency(productPrice);
+            document.getElementById('resultPackagingFee').textContent = formatCurrency(packagingFee);
+            document.getElementById('resultDeliveryFee').textContent = formatCurrency(customerDeliveryFee);
+            document.getElementById('resultDiscountTotal').textContent = formatCurrency(discountTotal);
+            document.getElementById('resultDeliveryDiscountAmount').textContent = formatCurrency(deliveryDiscountAmount);
+            document.getElementById('resultOrderAmount').textContent = formatCurrency(orderAmount);
+            document.getElementById('resultCommission').innerHTML = formatCurrency(commission) + formatPercentage(commission, orderAmount);
+            document.getElementById('resultMeituanDeliveryFee').innerHTML = formatCurrency(meituanDeliveryFee) + formatPercentage(meituanDeliveryFee, orderAmount);
+            document.getElementById('resultMerchantDiscount').innerHTML = formatCurrency(merchantDiscountShare) + formatPercentage(merchantDiscountShare, orderAmount);
+            document.getElementById('resultMerchantDeliveryDiscount').innerHTML = formatCurrency(merchantDeliveryDiscountShare) + formatPercentage(merchantDeliveryDiscountShare, orderAmount);
+            document.getElementById('resultProductCost').innerHTML = formatCurrency(productCost) + formatPercentage(productCost, orderAmount);
+            document.getElementById('resultFinalEarnings').innerHTML = formatCurrency(finalEarnings) + formatPercentage(finalEarnings, orderAmount);
+            document.getElementById('resultNetProfit').innerHTML = formatCurrency(netProfit) + formatPercentage(netProfit, orderAmount);
+            
+            // 更新公式显示
+            document.getElementById('commissionFormula').innerHTML = commissionFormula;
+            document.getElementById('deliveryFeeFormula').innerHTML = deliveryFeeFormula;
+            document.getElementById('customerDeliveryFormula').innerHTML = `顾客支付的配送费: ${customerDeliveryFee}元`;
+            
+            if (discountFormula) {
+                document.getElementById('discountFormula').innerHTML = discountFormula;
+            }
+            
+            if (merchantDiscountFormula) {
+                document.getElementById('merchantDiscountFormula').innerHTML = merchantDiscountFormula;
+            }
+            
+            // 设置净利润颜色
+            const netProfitElement = document.getElementById('resultNetProfit');
+            if (netProfit > 0) {
+                netProfitElement.classList.add('profit-positive');
+                netProfitElement.classList.remove('profit-negative');
+            } else {
+                netProfitElement.classList.add('profit-negative');
+                netProfitElement.classList.remove('profit-positive');
+            }
+            
+            // 显示结果卡片
+            document.getElementById('resultCard').classList.remove('hidden');
+            document.getElementById('resultDiscountRow').style.display = discountTotal > 0 ? 'flex' : 'none';
+            document.getElementById('resultDeliveryDiscountRow').style.display = deliveryDiscountAmount > 0 ? 'flex' : 'none';
+            document.getElementById('merchantDiscountRow').style.display = merchantDiscountShare > 0 ? 'flex' : 'none';
+            document.getElementById('merchantDeliveryDiscountRow').style.display = merchantDeliveryDiscountShare > 0 ? 'flex' : 'none';
+            document.getElementById('productCostRow').style.display = productCost > 0 ? 'flex' : 'none';
+            document.getElementById('netProfitRow').style.display = productCost > 0 ? 'flex' : 'none';
+        }
+        
+        function calculateMeituanDeliveryFee(distance, orderAmount, timeSlot) {
+            // 距离收费计算
+            let distanceFee = 0;
+            let distanceFormula = '';
+            
+            if (distance <= 3.0) {
+                distanceFee = 3.9; // 起步价
+                distanceFormula = `距离费: 0.0-3.0公里, 起步价3.9元`;
+            } else {
+                distanceFee = 3.9 + (distance - 3.0) * 1; // 超过3公里部分，每0.1公里加收0.1元
+                distanceFormula = `距离费: 3.9元 + (${distance.toFixed(1)} - 3.0) × 1 = ${distanceFee.toFixed(2)}元`;
+            }
+            
+            // 价格收费计算
+            let priceFee = 0;
+            let priceFormula = '';
+            
+            if (orderAmount <= 30) {
+                priceFee = 0;
+                priceFormula = `价格费: 订单 ${orderAmount.toFixed(2)}元 ≤ 30元, 收费0元`;
+            } else if (orderAmount <= 35) {
+                priceFee = (orderAmount - 30) * 0.13;
+                priceFormula = `价格费: (${orderAmount.toFixed(2)} - 30) × 0.13 = ${priceFee.toFixed(2)}元`;
+            } else {
+                priceFee = 5 * 0.13 + (orderAmount - 35) * 0.15;
+                priceFormula = `价格费: 5 × 0.13 + (${orderAmount.toFixed(2)} - 35) × 0.15 = ${priceFee.toFixed(2)}元`;
+            }
+            
+            // 时段收费计算
+            let timeFee = 0;
+            let timeFormula = '';
+            
+            switch (timeSlot) {
+                case 'late': // 22:00-24:00
+                    timeFee = 0.3;
+                    timeFormula = `时段费: 22:00-24:00, 加收0.3元`;
+                    break;
+                case 'early_morning': // 00:00-02:00
+                    timeFee = 0.5;
+                    timeFormula = `时段费: 00:00-02:00, 加收0.5元`;
+                    break;
+                case 'dawn': // 02:00-06:00
+                    timeFee = 1.0;
+                    timeFormula = `时段费: 02:00-06:00, 加收1.0元`;
+                    break;
+                default: // 普通时段 06:00-22:00
+                    timeFee = 0;
+                    timeFormula = `时段费: 06:00-22:00, 不加收`;
+            }
+            
+            // 总配送费 = 距离收费 + 价格收费 + 时段收费
+            const totalFee = distanceFee + priceFee + timeFee;
+            const deliveryFeeFormula = `${distanceFormula} + ${priceFormula} + ${timeFormula} = ${totalFee.toFixed(2)}元`;
+            
+            return {
+                meituanDeliveryFee: totalFee,
+                deliveryFeeFormula: deliveryFeeFormula
+            };
+        }
+    </script>
+</body>
+</html>
