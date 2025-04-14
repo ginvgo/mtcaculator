@@ -255,6 +255,7 @@
                     <option value="regularCoupon">普通红包</option>
                     <option value="expandCoupon">膨胀红包</option>
                     <option value="discount">折扣</option>
+                    <option value="fullReduction">满减优惠</option>
                 </select>
             </div>
             
@@ -270,6 +271,17 @@
                 <div class="form-group">
                     <label for="discountPercent">折扣比例 (%)</label>
                     <input type="number" id="discountPercent" min="0" max="100" step="1" placeholder="输入折扣比例，如90表示9折">
+                </div>
+            </div>
+
+            <div id="fullReductionSection" class="hidden">
+                <div class="form-group">
+                    <label for="fullReductionThreshold">满减条件 (元)</label>
+                    <input type="number" id="fullReductionThreshold" min="0" step="1" placeholder="满多少元">
+                </div>
+                <div class="form-group">
+                    <label for="fullReductionDiscount">减免金额 (元)</label>
+                    <input type="number" id="fullReductionDiscount" min="0" step="1" placeholder="减多少元">
                 </div>
             </div>
         </div>
@@ -326,6 +338,13 @@
                 </div>
                 <div class="result-value" id="resultDeliveryFee">¥0.00</div>
             </div>
+            <div class="result-row highlight">
+                <div class="result-label">
+                    商品小计
+                    <div class="formula">商品金额 + 包装费 + 配送费</div>
+                </div>
+                <div class="result-value" id="resultProductSubtotal">¥0.00</div>
+            </div>
             <div class="result-row" id="resultDiscountRow">
                 <div class="result-label">
                     用户优惠金额
@@ -378,7 +397,7 @@
             <div class="result-total result-row">
                 <div class="result-label">
                     商家最终收益
-                    <div class="formula">用户支付金额 - 平台佣金 - 美团配送费 - 商家承担的优惠</div>
+                    <div class="formula">商品小计 - 平台佣金 - 美团配送费 - 商家承担的优惠</div>
                 </div>
                 <div class="result-value" id="resultFinalEarnings">¥0.00 <span class="percentage">0%</span></div>
             </div>
@@ -404,15 +423,24 @@
             }
         }
         
+        function toggleDeliveryDiscountSection() {
+            const deliveryDiscountSection = document.getElementById('deliveryDiscountSection');
+            const hasDeliveryDiscount = document.getElementById('hasDeliveryDiscount').checked;
+            
+            deliveryDiscountSection.classList.toggle('hidden', !hasDeliveryDiscount);
+        }
+        
         function toggleCouponSection() {
             const discountType = document.getElementById('discountType').value;
             const couponSection = document.getElementById('couponSection');
             const discountPercentSection = document.getElementById('discountPercentSection');
+            const fullReductionSection = document.getElementById('fullReductionSection');
             const couponInfo = document.getElementById('couponInfo');
             
             couponSection.classList.toggle('hidden', discountType !== 'regularCoupon' && discountType !== 'expandCoupon');
             discountPercentSection.classList.toggle('hidden', discountType !== 'discount');
-            
+            fullReductionSection.classList.toggle('hidden', discountType !== 'fullReduction');
+
             if (discountType === 'regularCoupon') {
                 couponInfo.textContent = '普通红包商家最多承担3元';
             } else if (discountType === 'expandCoupon') {
@@ -421,24 +449,7 @@
                 couponInfo.textContent = '';
             }
         }
-        
-        function toggleDeliveryDiscountSection() {
-            const deliveryDiscountSection = document.getElementById('deliveryDiscountSection');
-            const hasDeliveryDiscount = document.getElementById('hasDeliveryDiscount').checked;
-            
-            deliveryDiscountSection.classList.toggle('hidden', !hasDeliveryDiscount);
-        }
-        
-        function formatCurrency(value) {
-            return '¥' + parseFloat(value).toFixed(2);
-        }
-        
-        function formatPercentage(value, total) {
-            if (total === 0) return '<span class="percentage">0%</span>';
-            const percentage = (value / total * 100).toFixed(1);
-            return `<span class="percentage">${percentage}%</span>`;
-        }
-        
+
         function calculateEarnings() {
             // 获取基本输入值
             const productPrice = parseFloat(document.getElementById('productPrice').value) || 0;
@@ -447,6 +458,9 @@
             const customerDeliveryFee = parseFloat(document.getElementById('customerDeliveryFee').value) || 0;
             const deliveryDistance = parseFloat(document.getElementById('deliveryDistance').value) || 0;
             const commissionRate = parseFloat(document.getElementById('commissionRate').value) || 6.0;
+            
+            // 计算商品小计 (商品金额 + 包装费 + 配送费)
+            const productSubtotal = productPrice + packagingFee + customerDeliveryFee;
             
             // 计算优惠金额
             let discountTotal = 0;
@@ -478,6 +492,18 @@
                     merchantDiscountShare = discountTotal; // 折扣全部由商家承担
                     discountFormula = `折扣: ${discountPercent}% = 商品金额 ${productPrice}元 × (1 - ${discountPercent}%) = ${discountTotal.toFixed(2)}元`;
                     merchantDiscountFormula = `折扣由商家全部承担: ${discountTotal.toFixed(2)}元`;
+                } else if (discountType === 'fullReduction') {
+                    const threshold = parseFloat(document.getElementById('fullReductionThreshold').value) || 0;
+                    const reduction = parseFloat(document.getElementById('fullReductionDiscount').value) || 0;
+                    
+                    if (productPrice >= threshold) {
+                        discountTotal = reduction;
+                        discountFormula = `满${threshold}元减${reduction}元`;
+                        merchantDiscountShare = reduction; // 满减全部由商家承担
+                        merchantDiscountFormula = `满减优惠由商家全部承担: ${reduction}元`;
+                    } else {
+                        discountFormula = `未达到满减条件 (${productPrice}元 < ${threshold}元)`;
+                    }
                 }
             }
             
@@ -520,8 +546,8 @@
                 document.getElementById('deliveryTime').value
             );
             
-            // 计算最终收益
-            const finalEarnings = orderAmount - commission - meituanDeliveryFee - merchantDiscountShare;
+            // 计算最终收益 - 使用商品小计计算
+            const finalEarnings = productSubtotal - commission - meituanDeliveryFee - merchantDiscountShare;
             
             // 计算净利润 (如果提供了成本)
             const netProfit = finalEarnings - productCost;
@@ -530,16 +556,18 @@
             document.getElementById('resultProductPrice').textContent = formatCurrency(productPrice);
             document.getElementById('resultPackagingFee').textContent = formatCurrency(packagingFee);
             document.getElementById('resultDeliveryFee').textContent = formatCurrency(customerDeliveryFee);
+            document.getElementById('resultProductSubtotal').textContent = formatCurrency(productSubtotal);
             document.getElementById('resultDiscountTotal').textContent = formatCurrency(discountTotal);
             document.getElementById('resultDeliveryDiscountAmount').textContent = formatCurrency(deliveryDiscountAmount);
             document.getElementById('resultOrderAmount').textContent = formatCurrency(orderAmount);
-            document.getElementById('resultCommission').innerHTML = formatCurrency(commission) + formatPercentage(commission, orderAmount);
-            document.getElementById('resultMeituanDeliveryFee').innerHTML = formatCurrency(meituanDeliveryFee) + formatPercentage(meituanDeliveryFee, orderAmount);
-            document.getElementById('resultMerchantDiscount').innerHTML = formatCurrency(merchantDiscountShare) + formatPercentage(merchantDiscountShare, orderAmount);
             
-            document.getElementById('resultProductCost').innerHTML = formatCurrency(productCost) + formatPercentage(productCost, orderAmount);
-            document.getElementById('resultFinalEarnings').innerHTML = formatCurrency(finalEarnings) + formatPercentage(finalEarnings, orderAmount);
-            document.getElementById('resultNetProfit').innerHTML = formatCurrency(netProfit) + formatPercentage(netProfit, orderAmount);
+            // 使用商品小计作为百分比计算基准
+            document.getElementById('resultCommission').innerHTML = formatCurrency(commission) + formatPercentage(commission, productSubtotal);
+            document.getElementById('resultMeituanDeliveryFee').innerHTML = formatCurrency(meituanDeliveryFee) + formatPercentage(meituanDeliveryFee, productSubtotal);
+            document.getElementById('resultMerchantDiscount').innerHTML = formatCurrency(merchantDiscountShare) + formatPercentage(merchantDiscountShare, productSubtotal);
+            document.getElementById('resultProductCost').innerHTML = formatCurrency(productCost) + formatPercentage(productCost, productSubtotal);
+            document.getElementById('resultFinalEarnings').innerHTML = formatCurrency(finalEarnings) + formatPercentage(finalEarnings, productSubtotal);
+            document.getElementById('resultNetProfit').innerHTML = formatCurrency(netProfit) + formatPercentage(netProfit, productSubtotal);
             
             // 更新公式显示
             document.getElementById('commissionFormula').innerHTML = commissionFormula;
@@ -569,7 +597,6 @@
             document.getElementById('resultDiscountRow').style.display = discountTotal > 0 ? 'flex' : 'none';
             document.getElementById('resultDeliveryDiscountRow').style.display = deliveryDiscountAmount > 0 ? 'flex' : 'none';
             document.getElementById('merchantDiscountRow').style.display = merchantDiscountShare > 0 ? 'flex' : 'none';
-            document.getElementById('merchantDeliveryDiscountRow').style.display = merchantDeliveryDiscountShare > 0 ? 'flex' : 'none';
             document.getElementById('productCostRow').style.display = productCost > 0 ? 'flex' : 'none';
             document.getElementById('netProfitRow').style.display = productCost > 0 ? 'flex' : 'none';
         }
@@ -632,6 +659,16 @@
                 meituanDeliveryFee: totalFee,
                 deliveryFeeFormula: deliveryFeeFormula
             };
+        }
+
+        function formatCurrency(amount) {
+            return '¥' + amount.toFixed(2);
+        }
+
+        function formatPercentage(value, total) {
+            if (total === 0) return '';
+            const percentage = (value / total * 100).toFixed(1);
+            return `<span class="percentage">${percentage}%</span>`;
         }
     </script>
 </body>
