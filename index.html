@@ -508,18 +508,27 @@
             }
             
             // 计算配送费减免
-            let deliveryDiscountAmount = 0;
-            let merchantDeliveryDiscountShare = 0;
-            
-            if (document.getElementById('hasDeliveryDiscount').checked) {
-                const freeDeliveryDistance = parseFloat(document.getElementById('freeDeliveryDistance').value) || 0;
-                const deliveryDiscountAmountInput = parseFloat(document.getElementById('deliveryDiscountAmount').value) || 0;
-                
-                if (deliveryDistance <= freeDeliveryDistance) {
-                    deliveryDiscountAmount = Math.min(deliveryDiscountAmountInput, customerDeliveryFee);
-                    merchantDeliveryDiscountShare = deliveryDiscountAmount;
-                }
-            }
+let deliveryDiscountAmount = 0;
+let merchantDeliveryDiscountShare = 0;
+
+if (document.getElementById('hasDeliveryDiscount').checked) {
+    const freeDeliveryDistance = parseFloat(document.getElementById('freeDeliveryDistance').value) || 0;
+    const deliveryDiscountAmountInput = parseFloat(document.getElementById('deliveryDiscountAmount').value) || 0;
+    const originalDeliveryFee = parseFloat(document.getElementById('customerDeliveryFee').value) || 0;
+    
+    // 核心修正逻辑开始
+    if (deliveryDistance <= freeDeliveryDistance) {
+        // 在免费公里数内：全额减免
+        deliveryDiscountAmount = originalDeliveryFee;
+    } else {
+        // 超过免费公里数：按设置的减免金额减免，但不能超过原配送费
+        deliveryDiscountAmount = Math.min(deliveryDiscountAmountInput, originalDeliveryFee);
+    }
+    // 核心修正逻辑结束
+    
+    // 商家承担金额同步
+    merchantDeliveryDiscountShare = deliveryDiscountAmount;
+}
             
             // 计算用户实际支付金额
             const orderAmount = productPrice + packagingFee + customerDeliveryFee - discountTotal - deliveryDiscountAmount;
