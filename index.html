@@ -355,7 +355,7 @@
             <div class="result-row" id="resultDeliveryDiscountRow">
                 <div class="result-label">
                     配送费减免
-                    <div class="formula">指定{freeDeliveryDistance}公里内减免的配送费</div>
+                    <div class="formula">指定距离内减免的配送费</div>
                 </div>
                 <div class="result-value" id="resultDeliveryDiscountAmount">¥0.00</div>
             </div>
@@ -459,8 +459,8 @@
             const deliveryDistance = parseFloat(document.getElementById('deliveryDistance').value) || 0;
             const commissionRate = parseFloat(document.getElementById('commissionRate').value) || 6.0;
             
-            // 计算商品小计 (商品金额 + 包装费 + 配送费 - 配送费减免金额)
-            const productSubtotal = productPrice + packagingFee + customerDeliveryFee - deliveryDiscountAmount;
+            // 计算商品小计 (商品金额 + 包装费 + 配送费)
+            const productSubtotal = productPrice + packagingFee + customerDeliveryFee;
             
             // 计算优惠金额
             let discountTotal = 0;
@@ -508,21 +508,18 @@
             }
             
             // 计算配送费减免
-let deliveryDiscountAmount = 0;
-
-if (document.getElementById('hasDeliveryDiscount').checked) {
-    const freeDeliveryDistance = parseFloat(document.getElementById('freeDeliveryDistance').value) || 0;
-    const deliveryDiscountAmountInput = parseFloat(document.getElementById('deliveryDiscountAmount').value) || 0;
-    const originalDeliveryFee = parseFloat(document.getElementById('customerDeliveryFee').value) || 0;
-    
-    if (deliveryDistance <= freeDeliveryDistance) {
-        // 在免费公里数内：全额减免
-        deliveryDiscountAmount = originalDeliveryFee;
-    } else {
-        // 超过免费公里数：按设置的减免金额减免，但不能超过原配送费
-        deliveryDiscountAmount = Math.min(deliveryDiscountAmountInput, originalDeliveryFee);
-    }
-}
+            let deliveryDiscountAmount = 0;
+            let merchantDeliveryDiscountShare = 0;
+            
+            if (document.getElementById('hasDeliveryDiscount').checked) {
+                const freeDeliveryDistance = parseFloat(document.getElementById('freeDeliveryDistance').value) || 0;
+                const deliveryDiscountAmountInput = parseFloat(document.getElementById('deliveryDiscountAmount').value) || 0;
+                
+                if (deliveryDistance <= freeDeliveryDistance) {
+                    deliveryDiscountAmount = Math.min(deliveryDiscountAmountInput, customerDeliveryFee);
+                    merchantDeliveryDiscountShare = deliveryDiscountAmount;
+                }
+            }
             
             // 计算用户实际支付金额
             const orderAmount = productPrice + packagingFee + customerDeliveryFee - discountTotal - deliveryDiscountAmount;
